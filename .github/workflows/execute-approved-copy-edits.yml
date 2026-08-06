@@ -1,0 +1,35 @@
+name: Execute approved copy edits
+on:
+  push:
+    paths:
+      - '.copy-edit-trigger'
+permissions:
+  contents: write
+jobs:
+  edit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run the approved edit script
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          workflow = Path('.github/workflows/apply-copy-and-clarity-edits.yml').read_text()
+          start = workflow.index("          from pathlib import Path")
+          end = workflow.index("          PY\n", start)
+          block = workflow[start:end]
+          source = "\n".join(line[10:] if line.startswith("          ") else line for line in block.splitlines())
+          exec(source)
+          PY
+      - name: Remove temporary files
+        run: |
+          rm .copy-edit-trigger
+          rm .github/workflows/apply-copy-and-clarity-edits.yml
+          rm .github/workflows/execute-approved-copy-edits.yml
+      - name: Commit approved edits
+        run: |
+          git config user.name "ASC3ND Copy Editor"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html .copy-edit-trigger .github/workflows/apply-copy-and-clarity-edits.yml .github/workflows/execute-approved-copy-edits.yml
+          git commit -m "Polish Facebook onboarding copy and clarify ownership"
+          git push
