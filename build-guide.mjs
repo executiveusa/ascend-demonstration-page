@@ -23,10 +23,13 @@ for (let index = 0; index < 7; index += 1) {
 let html = Buffer.from(parts.join(''), 'base64').toString('utf8');
 
 const approvedPostLabel = 'Example only — please edit with your own words';
-html = html.replace(
-  /(<section class="step" data-title="Publish and report">[\s\S]*?<div class="panel"><h3>)[\s\S]*?(<\/h3>)/,
-  `$1${approvedPostLabel}$2`,
-);
+const welcomeAnchor = '<strong>Welcome to the official ASC3ND Collective Facebook Page.</strong>';
+const welcomeIndex = html.indexOf(welcomeAnchor);
+if (welcomeIndex < 0) throw new Error('Could not locate the approved first-post example.');
+const headingOpen = html.lastIndexOf('<h3', welcomeIndex);
+const headingClose = html.lastIndexOf('</h3>', welcomeIndex);
+if (headingOpen < 0 || headingClose < headingOpen) throw new Error('Could not locate the first-post example heading.');
+html = `${html.slice(0, headingOpen)}<h3>${approvedPostLabel}</h3>${html.slice(headingClose + 5)}`;
 
 const required = [
   '<!doctype html>',
