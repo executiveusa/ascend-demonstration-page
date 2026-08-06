@@ -1,8 +1,20 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 
+const repository = 'https://raw.githubusercontent.com/executiveusa/ascend-demonstration-page/main';
+
+async function readChunk(index) {
+  try {
+    return await readFile(new URL(`./chunks/${index}.js`, import.meta.url), 'utf8');
+  } catch {
+    const response = await fetch(`${repository}/chunks/${index}.js`, { cache: 'no-store' });
+    if (!response.ok) throw new Error(`Unable to download guide chunk ${index}: HTTP ${response.status}`);
+    return response.text();
+  }
+}
+
 const parts = [];
 for (let index = 0; index < 7; index += 1) {
-  const source = await readFile(new URL(`./chunks/${index}.js`, import.meta.url), 'utf8');
+  const source = await readChunk(index);
   const match = source.match(/window\.__parts\[(\d+)\]='([^']*)'/);
   if (!match || Number(match[1]) !== index) {
     throw new Error(`Invalid guide chunk: chunks/${index}.js`);
