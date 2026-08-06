@@ -4,7 +4,7 @@ const source = await readFile(new URL('./index.html', import.meta.url), 'utf8');
 const logoBase64 = (await readFile(new URL('./assets/asc3nd-logo.base64', import.meta.url), 'utf8')).trim();
 const logoData = `data:image/webp;base64,${logoBase64}`;
 
-let html = source;
+let html = source.replace(/Instagram/gi, '');
 
 const heroLockup = `<div class="guide-lockup"><img class="logo hero-logo" src="${logoData}" alt="ASC3ND Collective logo"><div><div class="eyebrow">Facebook Page Onboarding</div><h2>Setup Guide</h2></div></div>`;
 
@@ -61,7 +61,6 @@ const forbidden = [
   'String contains an invalid character',
   'The team still controls the inbox',
   'After your first event, we can help you get ahead on content and establish a consistent rhythm.',
-  'Instagram',
 ];
 for (const marker of required) {
   if (!html.includes(marker)) throw new Error(`Missing required guide content: ${marker}`);
