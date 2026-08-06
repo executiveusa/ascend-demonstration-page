@@ -1,16 +1,21 @@
 name: Publish final standalone ASC3ND guide
 on:
-  push:
+  pull_request:
     paths:
-      - .final-publish-trigger
+      - .publish-final-guide
+  workflow_dispatch:
 permissions:
   contents: write
 jobs:
   publish:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Rebuild one self-contained HTML file
+        with:
+          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
+          fetch-depth: 0
+      - name: Rebuild and verify one self-contained HTML file
         run: |
           python - <<'PY'
           import base64, glob, re
@@ -23,10 +28,8 @@ jobs:
           for expected, path in enumerate(files):
               text = open(path, encoding='utf-8').read()
               match = re.search(r"window\.__parts\[(\d+)\]='([^']*)'", text)
-              if not match:
-                  raise SystemExit(f'Invalid chunk format: {path}')
-              if int(match.group(1)) != expected:
-                  raise SystemExit(f'Unexpected chunk order in {path}')
+              if not match or int(match.group(1)) != expected:
+                  raise SystemExit(f'Invalid chunk: {path}')
               parts.append(match.group(2))
 
           html = base64.b64decode(''.join(parts), validate=True).decode('utf-8')
@@ -35,14 +38,11 @@ jobs:
               '<!doctype html>',
               'ASC3ND Collective — Facebook Page Onboarding',
               'class="hero-logo"',
+              'Step 1 of 7',
               'Example only — please edit with your own words',
               'Later, after the Facebook Page and the new domain mailbox are stable, you may add or replace the public contact email',
               'However, if Otha’s account was the one involved in the earlier block',
           )
-          for marker in required:
-              if marker not in html:
-                  raise SystemExit(f'Missing required marker: {marker}')
-
           forbidden = (
               'window.__parts',
               '/chunks/',
@@ -56,20 +56,22 @@ jobs:
               'The team still controls the inbox',
               'After your first event, we can help you get ahead on content and establish a consistent rhythm.',
           )
+          for marker in required:
+              if marker not in html:
+                  raise SystemExit(f'Missing required marker: {marker}')
           for marker in forbidden:
               if marker in html:
                   raise SystemExit(f'Forbidden marker found: {marker}')
-
           if html.count('class="step" data-title=') != 7:
               raise SystemExit('The guide must contain exactly 7 steps')
 
           open('index.html', 'w', encoding='utf-8').write(html)
-          print(f'Built standalone index.html ({len(html.encode("utf-8"))} bytes)')
+          print(f'Built verified standalone index.html ({len(html.encode("utf-8"))} bytes)')
           PY
-      - name: Commit final guide to main
+      - name: Commit verified guide to the pull-request branch
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add index.html
           git commit -m "Publish verified standalone ASC3ND setup guide" || exit 0
-          git push
+          git push origin HEAD:${{ github.event.pull_request.head.ref || github.ref_name }}
