@@ -1,0 +1,43 @@
+name: Publish final standalone ASC3ND guide
+on:
+  push:
+    paths:
+      - .final-publish-trigger
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build final standalone HTML
+        run: |
+          python - <<'PY'
+          import re, urllib.request
+          base_url='https://ascend-demonstration-page-ozs4ik8cv-the-pauli-effect.vercel.app'
+          wrapper_url='https://ascend-demonstration-page-lkoi7hcde-the-pauli-effect.vercel.app'
+          html=urllib.request.urlopen(base_url, timeout=30).read().decode('utf-8')
+          wrapper=urllib.request.urlopen(wrapper_url, timeout=30).read().decode('utf-8')
+          match=re.search(r'data:image/webp;base64,([A-Za-z0-9+/=]+)', wrapper)
+          if not match:
+              raise SystemExit('Logo payload not found')
+          old='<h1>Set it up.<br>Secure it.<br>Move forward.</h1>'
+          if old not in html:
+              raise SystemExit('Hero headline marker not found')
+          logo='<div class="hero-logo-wrap"><img class="hero-logo" src="data:image/webp;base64,'+match.group(1)+'" alt="ASC3ND logo"></div>'
+          html=html.replace(old, logo, 1)
+          html=html.replace('<h3>Suggested first post</h3>','<h3>Example only — please edit with your own words</h3>',1)
+          css='.hero-logo-wrap{margin:.35rem 0 1rem;display:flex;align-items:flex-start}.hero-logo{display:block;width:clamp(220px,34vw,430px);height:auto;object-fit:contain;filter:drop-shadow(0 12px 30px rgba(0,0,0,.25))}@media(max-width:900px){.hero-logo{width:min(78vw,360px)}}'
+          html=html.replace('</style>',css+'</style>',1)
+          for forbidden in ('fetch(', 'location.replace(', 'DecompressionStream', 'http-equiv="refresh"'):
+              if forbidden in html:
+                  raise SystemExit('Forbidden runtime dependency: '+forbidden)
+          open('index.html','w',encoding='utf-8').write(html)
+          PY
+      - name: Commit final guide
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add index.html
+          git commit -m "Publish final standalone ASC3ND setup guide" || exit 0
+          git push
