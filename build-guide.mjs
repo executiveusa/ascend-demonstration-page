@@ -6,7 +6,7 @@ async function readChunk(index) {
   try {
     return await readFile(new URL(`./chunks/${index}.js`, import.meta.url), 'utf8');
   } catch {
-    const response = await fetch(`${repository}/chunks/${index}.js`, { cache: 'no-store' });
+    const response = await fetch(`${repository}/chunks/${index}.js?build=${Date.now()}`, { cache: 'no-store' });
     if (!response.ok) throw new Error(`Unable to download guide chunk ${index}: HTTP ${response.status}`);
     return response.text();
   }
@@ -22,7 +22,14 @@ for (let index = 0; index < 7; index += 1) {
   parts.push(match[2]);
 }
 
-const html = Buffer.from(parts.join(''), 'base64').toString('utf8');
+let html = Buffer.from(parts.join(''), 'base64').toString('utf8');
+
+// Normalize the approved Step 7 label even when an edge cache returns the prior copy.
+html = html.replace(
+  /<h3>[^<]*<\/h3>(?=<p><strong>Welcome to the official ASC3ND Collective Facebook Page\.<\/strong><\/p>)/,
+  '<h3>Example only — please edit with your own words</h3>',
+);
+
 const required = [
   '<!doctype html>',
   'ASC3ND Collective — Facebook Page Onboarding',
