@@ -1,0 +1,89 @@
+name: Apply approved copy and clarity edits
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/apply-copy-and-clarity-edits.yml'
+permissions:
+  contents: write
+jobs:
+  edit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply approved edits
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text()
+
+          replacements = [
+            ("Hello Otha and Elisha, we spoke earlier about the Facebook block and you mentioned using your other account. I spoke with my team, and they agreed that you can absolutely do that—and that it's a better approach long term as you grow. I know social media can be frustrating, and you're both busy, so we put together a small guide to make the process as simple as possible. If you have any questions along the way, we'll work through them together until everything is up and running.",
+             "Hello Elisha, we spoke earlier about the Facebook block, and you mentioned using your other account. I spoke with my team, and they agreed that you can absolutely do that—and that it’s a better long-term approach as ASC3ND grows. I know social media can be frustrating, and I know you and Otha are both busy, so we put together a small guide to make the process as simple as possible. If either of you has questions along the way, we’ll work through them together until everything is up and running."),
+            ("Turn on two-factor authentication.---*IMPORTANT", "Turn on two-factor authentication. <strong>Important.</strong>"),
+            ("Do not attach any of the past  recently challenged `emails address to Elisha’s personal Facebook login or recovery settings during the initial setup.", "Do not attach any previously challenged email address to your personal Facebook login or recovery settings during the initial setup."),
+            ("A. Private Facebook login and a recovery email", "A. Private Facebook login and recovery email"),
+            ("She can  also keep her trusted personal mobile number connected to the account.", "You can also keep your trusted personal mobile number connected to the account."),
+            ("This information remains private to Elisha’s personal Facebook account.", "This information remains private to your personal Facebook account."),
+            ("It was not involved in the blocked Facebook attempt you mentioned before *IMPORTANT", "It was not involved in the blocked Facebook attempt you mentioned earlier. <strong>Important.</strong>"),
+            ("<code>social@asc3nd.org</code>or a variant. Since you own this domain asset you can create other emails as needed.  example staff@asc3nd.org   info@asc3nd.org etc.", "<code>social@asc3nd.org</code> or a variant. Since you own the domain, you can create other email addresses as needed, such as <code>staff@asc3nd.org</code> or <code>info@asc3nd.org</code>."),
+            ("Elisha’s private Facebook login email and the nonprofit Page’s public contact email do not need to be the same.", "Your private Facebook login email and the nonprofit Page’s public contact email do not need to be the same."),
+            ("<strong>Private account email:</strong> Used to secure Elisha’s Facebook account.", "<strong>Private account email:</strong> Used to secure your Facebook account."),
+            ("We created the images you need and they are already sized for the profile. We expect them to fit correctly", "We created the images you need, and they are already sized for the profile. We expect them to fit correctly."),
+            ("Use the default URL they give you for now", "Use the default URL Facebook gives you for now."),
+            ("Add the official ASC3ND Collective Landing page asc3nd.org", "Add the official ASC3ND Collective landing page: <code>asc3nd.org</code>."),
+            ("At this stage avoid making new claims, programs, partnerships, statistics, or promises. Once your page is stable we can begin to deploy content", "At this stage, avoid making new claims, programs, partnerships, statistics, or promises. Once your Page is stable, we can begin publishing content."),
+            ("Elisha should remain the original creator and primary full-control administrator through her personal Facebook account.", "You should remain the original creator and primary full-control administrator through your personal Facebook account."),
+            ("After the Page is successfully created and stable, add Otha if he wants through his real personal Facebook account.*Unless this was the one you had blocked. In that case that may flag a review and it would be best that Otha stays the Primary", "After the Page is successfully created and stable, you can add Otha through his own personal Facebook account if you both decide he should have full control. If Otha’s account was involved in the earlier block, adding it may trigger another review. In that case, keep your account as the primary administrator until the Page is stable."),
+            ("Otha then has full control and can share permissions as you decide together with who and what for.", "Otha will then have full control, and you can decide together who receives access and what permissions they need."),
+            ("Keep an internal access register containing:", "Keep an internal access record containing:"),
+            ("Do not put personal passwords inside the shared access register.", "Do not put personal passwords inside the shared access record."),
+            ("Add Otha as the second trusted full-control administrator</li>", "Add Otha as the second trusted full-control administrator.</li>"),
+            ("Confirm two-factor authentication on your account.", "Confirm that two-factor authentication is active on each administrator’s account."),
+            ("Allow the Page to stabilize.", "Give the Page time to stabilize before making more changes."),
+            ("10. First Introduction Post", "9. First Introduction Post"),
+            ("This is a suggested draft Example Only. Please edit it to your own voice", "This is only a suggested example. Please edit it to match your own voice."),
+            ("11. If Facebook Blocks or Challenges the Setup", "10. If Facebook Blocks or Challenges the Setup"),
+            ("Stop after the first failed repeat attempt", "If the second attempt fails, stop and report the issue before trying again"),
+            ("12.We should not add the previous domain Email Yet", "11. Do Not Add the Previously Blocked Domain Email Yet"),
+            ("<code>social@asc3nd.org</code> or something similar", "<code>social@asc3nd.org</code> or another approved organizational address"),
+            ("This should never replace Elisha’s trusted personal recovery email on her Facebook account.", "This should never replace your trusted personal recovery email on your Facebook account."),
+            ("13.  Checklist.", "12. Checklist"),
+            ("<pre><code>Here is a small checklist that may be helpful to review once your set up  \n</code></pre>", "<p>Here is a short checklist to review after your Page is set up.</p>"),
+            ("Otha now has full control .", "Otha now has full control."),
+            ("<li class=\"task-list-item\"><input class=\"task-list-item-checkbox\" type=\"checkbox\" disabled/></li>\n", ""),
+            ("14. Information to share back to the Team", "13. Information to Share with the Team"),
+            ("If the preferred username is unavailable you can still proceed and we can address it once the page is stable", "If the preferred username is unavailable, you can still proceed. We can address it once the Page is stable."),
+            ("15. Final Thoughts", "14. Final Thoughts"),
+            ("<pre><code>This give you the control over your organization and builds you another asset. We will be here to help create the assets for you and make sure they are supporting your voice and your story. We create. you approve and post. This way after your 1st event we can get you ahead on content and find a rhythm. I'll be standing by if you have any issues. Instagram graphics are in the vault. If its not a problem please  share your normal schedules with me. We can be available to work closer with you as the event gets near. \n</code></pre>", "<p>This gives you greater control over your organization and creates another valuable asset. We will be here to help create the assets you need and make sure they support your voice and your story. We create. You approve and post. After your first event, we can help you get ahead on content and establish a consistent rhythm. I’ll be standing by if you have any issues. The Instagram graphics are in the vault. If it’s not a problem, please share your normal schedules with me. We can work more closely with you as the event approaches.</p>"),
+            ("<small>10. First Introduction Post</small>", "<small>9. First Introduction Post</small>"),
+            ("<small>11. If Facebook Blocks or Challenges the Setup</small>", "<small>10. If Facebook Blocks or Challenges the Setup</small>"),
+            ("<small>12.We should not add the previous domain Email Yet</small>", "<small>11. Do Not Add the Previously Blocked Domain Email Yet</small>"),
+            ("<small>13.  Checklist.</small>", "<small>12. Checklist</small>"),
+            ("<small>14. Information to share back to the Team</small>", "<small>13. Information to Share with the Team</small>"),
+            ("<small>15. Final Thoughts</small>", "<small>14. Final Thoughts</small>"),
+            ("Elisha’s established personal Facebook account.", "Your established personal Facebook account."),
+            ("Elisha’s older trusted personal email already connected to her Facebook account.", "Your older trusted personal email already connected to your Facebook account."),
+          ]
+
+          missing = []
+          for old, new in replacements:
+              if old not in s:
+                  missing.append(old)
+              s = s.replace(old, new)
+
+          if missing:
+              raise SystemExit('Missing expected text:\n' + '\n---\n'.join(missing))
+
+          p.write_text(s)
+          PY
+      - name: Remove one-time workflow
+        run: rm .github/workflows/apply-copy-and-clarity-edits.yml
+      - name: Commit changes
+        run: |
+          git config user.name "ASC3ND Copy Editor"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html .github/workflows/apply-copy-and-clarity-edits.yml
+          git commit -m "Polish Facebook onboarding copy and clarify ownership"
+          git push
