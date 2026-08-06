@@ -10,34 +10,66 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build final standalone HTML
+      - name: Rebuild one self-contained HTML file
         run: |
           python - <<'PY'
-          import re, urllib.request
-          base_url='https://ascend-demonstration-page-ozs4ik8cv-the-pauli-effect.vercel.app'
-          wrapper_url='https://ascend-demonstration-page-lkoi7hcde-the-pauli-effect.vercel.app'
-          html=urllib.request.urlopen(base_url, timeout=30).read().decode('utf-8')
-          wrapper=urllib.request.urlopen(wrapper_url, timeout=30).read().decode('utf-8')
-          match=re.search(r'data:image/webp;base64,([A-Za-z0-9+/=]+)', wrapper)
-          if not match:
-              raise SystemExit('Logo payload not found')
-          old='<h1>Set it up.<br>Secure it.<br>Move forward.</h1>'
-          if old not in html:
-              raise SystemExit('Hero headline marker not found')
-          logo='<div class="hero-logo-wrap"><img class="hero-logo" src="data:image/webp;base64,'+match.group(1)+'" alt="ASC3ND logo"></div>'
-          html=html.replace(old, logo, 1)
-          html=html.replace('<h3>Suggested first post</h3>','<h3>Example only — please edit with your own words</h3>',1)
-          css='.hero-logo-wrap{margin:.35rem 0 1rem;display:flex;align-items:flex-start}.hero-logo{display:block;width:clamp(220px,34vw,430px);height:auto;object-fit:contain;filter:drop-shadow(0 12px 30px rgba(0,0,0,.25))}@media(max-width:900px){.hero-logo{width:min(78vw,360px)}}'
-          html=html.replace('</style>',css+'</style>',1)
-          for forbidden in ('fetch(', 'location.replace(', 'DecompressionStream', 'http-equiv="refresh"'):
-              if forbidden in html:
-                  raise SystemExit('Forbidden runtime dependency: '+forbidden)
-          open('index.html','w',encoding='utf-8').write(html)
+          import base64, glob, re
+
+          files = sorted(glob.glob('chunks/*.js'), key=lambda p: int(re.search(r'(\d+)\.js$', p).group(1)))
+          if len(files) != 7:
+              raise SystemExit(f'Expected 7 chunk files, found {len(files)}')
+
+          parts = []
+          for expected, path in enumerate(files):
+              text = open(path, encoding='utf-8').read()
+              match = re.search(r"window\.__parts\[(\d+)\]='([^']*)'", text)
+              if not match:
+                  raise SystemExit(f'Invalid chunk format: {path}')
+              if int(match.group(1)) != expected:
+                  raise SystemExit(f'Unexpected chunk order in {path}')
+              parts.append(match.group(2))
+
+          html = base64.b64decode(''.join(parts), validate=True).decode('utf-8')
+
+          required = (
+              '<!doctype html>',
+              'ASC3ND Collective — Facebook Page Onboarding',
+              'class="hero-logo"',
+              'Example only — please edit with your own words',
+              'Later, after the Facebook Page and the new domain mailbox are stable, you may add or replace the public contact email',
+              'However, if Otha’s account was the one involved in the earlier block',
+          )
+          for marker in required:
+              if marker not in html:
+                  raise SystemExit(f'Missing required marker: {marker}')
+
+          forbidden = (
+              'window.__parts',
+              '/chunks/',
+              'raw.githubusercontent.com',
+              'DecompressionStream',
+              'Unable to open the presentation',
+              'Instagram',
+              'Set it up.',
+              'Secure it.',
+              'Move forward.',
+              'The team still controls the inbox',
+              'After your first event, we can help you get ahead on content and establish a consistent rhythm.',
+          )
+          for marker in forbidden:
+              if marker in html:
+                  raise SystemExit(f'Forbidden marker found: {marker}')
+
+          if html.count('class="step" data-title=') != 7:
+              raise SystemExit('The guide must contain exactly 7 steps')
+
+          open('index.html', 'w', encoding='utf-8').write(html)
+          print(f'Built standalone index.html ({len(html.encode("utf-8"))} bytes)')
           PY
-      - name: Commit final guide
+      - name: Commit final guide to main
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add index.html
-          git commit -m "Publish final standalone ASC3ND setup guide" || exit 0
+          git commit -m "Publish verified standalone ASC3ND setup guide" || exit 0
           git push
